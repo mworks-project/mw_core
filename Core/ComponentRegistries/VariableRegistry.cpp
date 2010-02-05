@@ -28,12 +28,16 @@ VariableRegistry::VariableRegistry(shared_ptr<EventBuffer> _buffer) {
     current_unique_code = N_RESERVED_CODEC_CODES;
 }
 
+int VariableRegistry::assignNewCodecCode(){
+    return current_unique_code++;
+}
+
 void VariableRegistry::reset(){
 
-    master_variable_list.clear();
+    master_variable_map_by_code = map< int, shared_ptr<Variable> >();
 	
     // for faster lookups by tag name
-    master_variable_dictionary = map< string, shared_ptr<Variable> >();
+    master_variable_map_by_name = map< string, shared_ptr<Variable> >();
     
 	// just the local variables
 	local_variable_list.clear();
@@ -44,7 +48,7 @@ void VariableRegistry::reset(){
 	// just the selection variables
     selection_variable_list.clear();
     
-    //addPlaceholders();
+    current_unique_code = N_RESERVED_CODEC_CODES;
 }
 	
 VariableRegistry::~VariableRegistry() { }
@@ -61,7 +65,7 @@ void VariableRegistry::updateFromCodecDatum(const Datum &codec) {
  	
 	boost::mutex::scoped_lock s_lock(lock);
 	
-	master_variable_list.clear();
+	master_variable_map_by_code = map< int, shared_ptr<Variable> >();
 	
 	// add the placeholders
 	//addPlaceholders();
@@ -69,63 +73,43 @@ void VariableRegistry::updateFromCodecDatum(const Datum &codec) {
 	
 	//////////////////////////////////////////////////////////////////
 	// now add what's in the codec 
+	vector<Datum> keys = codec.getKeys();
 	
-	ScarabDatum *datum = codec.getScarabDatum();
-	
-	ScarabDatum ** keys = scarab_dict_keys(datum);
-	int size = datum->data.dict->tablesize;
-	
-	
-	
-	int maxCodecCode = -1;
-	// find the maximum codec value
-	for(int i = 0; i < size; ++i) {
-		if(keys[i]) {
-			long long code = keys[i]->data.integer;
-			maxCodecCode = (maxCodecCode < code) ? code : maxCodecCode;
-		}
-	}
+    vector<Datum>::iterator i;
+    for(i = keys.begin(); i != keys.end(); ++i){
+        
+        Datum key = *i;
 		
-	// add each variable in order to the registry
-	for(int i = N_RESERVED_CODEC_CODES; i<=maxCodecCode; ++i) {
-		ScarabDatum *key = scarab_new_integer(i);
-		ScarabDatum *serializedVariable = scarab_dict_get(datum, key);
-		scarab_free_datum(key);
-		
-		if(serializedVariable) {
-			if(serializedVariable->type != SCARAB_DICT) {
-				// these must be  placeholder datums in the package
-				// that we should ignore.
-				mwarning(M_SYSTEM_MESSAGE_DOMAIN,
-						 "Bad variable received from network stream");
-				
-                shared_ptr<EmptyVariable> empty_var(new EmptyVariable);
-                master_variable_list.push_back(empty_var);
-                continue;
-			}
+        Datum serialized_variable = codec.getElement(key);
+
+        
+        if(!serialized_variable.isDictionary()) {
+            // these must be  placeholder datums in the package
+            // that we should ignore.
+            mwarning(M_SYSTEM_MESSAGE_DOMAIN,
+                     "Bad variable received from network stream");
+            continue;
+        }
 						
-			VariableProperties *props = 
-				new VariableProperties(serializedVariable);
-			
-			if(props == NULL){
-				mwarning(M_SYSTEM_MESSAGE_DOMAIN,
-						 "Bad variable received from network stream");
-				
-                shared_ptr<EmptyVariable> empty_var(new EmptyVariable);
-                master_variable_list.push_back(empty_var);
-                continue;
-			}
-			
-			shared_ptr<Variable> newvar(new GlobalVariable(props));
-			newvar->setCodecCode(i); //necessary? .. Yup
-			
-			master_variable_list.push_back(newvar);
-            
-            std::string tag = newvar->getVariableName();
-            if(!tag.empty()){
-                master_variable_dictionary[tag] = newvar;
-            }
-		}
+        VariableProperties *props = 
+            new VariableProperties(serialized_variable);
+        
+        if(props == NULL){
+            mwarning(M_SYSTEM_MESSAGE_DOMAIN,
+                     "Bad variable received from network stream");
+            continue;
+        }
+        
+        shared_ptr<Variable> newvar(new GlobalVariable(props));
+        newvar->setCodecCode((int)key); //necessary? .. Yup
+        
+        master_variable_map_by_code[(int)key] = newvar;
+        
+        std::string tag = newvar->getVariableName();
+        if(!tag.empty()){
+            master_variable_map_by_name[tag] = newvar;
+        }
+		
 	}
 }
 
@@ -161,9 +145,12 @@ void VariableRegistry::announceSelectionVariables(){
 void VariableRegistry::announceAll() {
 	boost::mutex::scoped_lock s_lock(lock);
 	
-    vector< shared_ptr<Variable> >::iterator i;
-    for(i = master_variable_list.begin(); i != master_variable_list.end(); i++){
-		(*i)->announce();
+    map< int, shared_ptr<Variable> >::iterator i;
+    for(i = master_variable_map_by_code.begin(); i != master_variable_map_by_code.end(); i++){
+        shared_ptr<Variable> v = (*i).second;
+        if(v != NULL){
+            v->announce();
+        }
 	}	
 }
 
@@ -174,8 +161,8 @@ shared_ptr<Variable> VariableRegistry::getVariable(const std::string& tagname) c
 	boost::mutex::scoped_lock s_lock((boost::mutex&)lock);
 	
     map< string, shared_ptr<Variable> >::const_iterator it;
-    it = master_variable_dictionary.find(tagname);
-    if(it == master_variable_dictionary.end()){
+    it = master_variable_map_by_name.find(tagname);
+    if(it == master_variable_map_by_name.end()){
         return shared_ptr<Variable>();
     } else {
         return it->second;
@@ -183,7 +170,7 @@ shared_ptr<Variable> VariableRegistry::getVariable(const std::string& tagname) c
         
     // This one line is how it would have been written if the stx parser guy 
     // didn't have a const-correctness stick up his butt
-    //return master_variable_dictionary[tagname];
+    //return master_variable_map_by_name[tagname];
 }
 
 
@@ -193,20 +180,13 @@ shared_ptr<Variable> VariableRegistry::getVariable(int codec_code) {
 
 	boost::mutex::scoped_lock s_lock((boost::mutex&)lock);
 	
-    // DDC: removed what was this for?
-	//mExpandableList<Variable> list(master_variable_list);
-	
-	if(codec_code < 0 || codec_code > master_variable_list.size() + N_RESERVED_CODEC_CODES){
-		merror(M_SYSTEM_MESSAGE_DOMAIN,
+    var = master_variable_map_by_code[codec_code];
+    
+    if(var == NULL){
+        merror(M_SYSTEM_MESSAGE_DOMAIN,
 			   "Attempt to get an invalid variable (code: %d)",
 			   codec_code);
-		
-		var = shared_ptr<Variable>();
-	} else {
-        // DDC: removed copying.  What was that for?
-		//var = list[codec_code];
-        var = master_variable_list[codec_code - N_RESERVED_CODEC_CODES];
-	}
+    }
 	
 	return var;
 }
@@ -216,9 +196,9 @@ std::vector<std::string> VariableRegistry::getVariableTagNames() {
 	
 	std::vector<std::string> tagnames;
 	
-    vector< shared_ptr<Variable> >::iterator i;
-	for(i = master_variable_list.begin(); i != master_variable_list.end(); i++){		
-		shared_ptr<Variable> var = (*i);		
+    map< int, shared_ptr<Variable> >::iterator i;
+	for(i = master_variable_map_by_code.begin(); i != master_variable_map_by_code.end(); i++){		
+		shared_ptr<Variable> var = (*i).second;		
 		if(var) {
 			tagnames.push_back(var->getVariableName());
 		}
@@ -236,7 +216,7 @@ bool VariableRegistry::hasVariable(std::string &tagname) const {
 
 
 int VariableRegistry::getNVariables() { 
-	return master_variable_list.size();
+	return master_variable_map_by_code.size();
 }
 
 
@@ -256,12 +236,13 @@ shared_ptr<ScopedVariable> VariableRegistry::addScopedVariable(weak_ptr<ScopedVa
     shared_ptr<ScopedVariable> new_variable(new ScopedVariable(props_copy));
 	//GlobalCurrentExperiment->addVariable(new_variable);
     
-    master_variable_list.push_back(new_variable);
-	codec_code = master_variable_list.size() + N_RESERVED_CODEC_CODES - 1;
+    codec_code = assignNewCodecCode(); // get a fresh code
+    
+    master_variable_map_by_code[codec_code] = new_variable;
     
     std::string tag = new_variable->getVariableName();
     if(!tag.empty()){
-        master_variable_dictionary[tag] = new_variable;
+        master_variable_map_by_name[tag] = new_variable;
 	}
     
     local_variable_list.push_back(new_variable);
@@ -291,14 +272,13 @@ shared_ptr<GlobalVariable> VariableRegistry::addGlobalVariable(VariablePropertie
 	VariableProperties *copy = new VariableProperties(*props);
 	shared_ptr<GlobalVariable> returnref(new GlobalVariable(copy));
 	
-    master_variable_list.push_back(returnref);
-	int codec_code = master_variable_list.size() + N_RESERVED_CODEC_CODES - 1;
+    int codec_code = assignNewCodecCode();
+    master_variable_map_by_code[codec_code] = returnref;
 	
     std::string tag = returnref->getVariableName();
     if(!tag.empty()){
-        master_variable_dictionary[tag] = returnref;
+        master_variable_map_by_name[tag] = returnref;
 	}
-    
     
     global_variable_list.push_back(returnref);
 	
@@ -333,7 +313,7 @@ shared_ptr<Timer> VariableRegistry::createTimer(VariableProperties *props) {
 	
 	std::string tag = new_timer->getVariableName();
 	if(!tag.empty()){
-        master_variable_dictionary[tag] = new_timer;
+        master_variable_map_by_name[tag] = new_timer;
 	}
 	
 	new_timer->setCodecCode(-1);
@@ -342,27 +322,6 @@ shared_ptr<Timer> VariableRegistry::createTimer(VariableProperties *props) {
 	return new_timer;
 }
 
-//shared_ptr<EmptyVariable> VariableRegistry::addPlaceholderVariable(VariableProperties *props){
-//	
-//	VariableProperties *props_copy;
-//	
-//	if(props != NULL){
-//		props_copy = new VariableProperties(*props);	
-//	} else {
-//		props_copy = NULL;
-//	}
-//	
-//	
-//	shared_ptr<EmptyVariable> returnref(new EmptyVariable(props_copy));
-//    
-//    master_variable_list.push_back(returnref);
-//	int codec_code = master_variable_list.size();
-//	
-//	returnref->setCodecCode(codec_code);
-//	returnref->setEventTarget(static_pointer_cast<EventReceiver>(event_buffer));
-//	
-//	return returnref;
-//}
 
 
 shared_ptr<SelectionVariable> VariableRegistry::addSelectionVariable(VariableProperties *props){
@@ -378,12 +337,13 @@ shared_ptr<SelectionVariable> VariableRegistry::addSelectionVariable(VariablePro
 	
 	shared_ptr<SelectionVariable> returnref(new SelectionVariable(props_copy));
 	
-    master_variable_list.push_back(returnref);
-	int codec_code = master_variable_list.size();
+    int codec_code = assignNewCodecCode();
+    
+    master_variable_map_by_code[codec_code] = returnref;
     
 	std::string tag = returnref->getVariableName();
     if(!tag.empty()){
-        master_variable_dictionary[tag] = returnref;
+        master_variable_map_by_name[tag] = returnref;
 	}
     
     selection_variable_list.push_back(returnref);
@@ -434,26 +394,31 @@ shared_ptr<SelectionVariable> VariableRegistry::createSelectionVariable(Variable
 
 
 Datum VariableRegistry::generateCodecDatum() {
-	
-	ScarabDatum *codec = NULL;
-    shared_ptr<Variable> var;
+	    
+	shared_ptr<Variable> var;
 	
 	
 	boost::mutex::scoped_lock s_lock(lock);
 
-    int dictSize = master_variable_list.size();
+    int number_of_variables = master_variable_map_by_code.size();
+    Datum return_codec(M_DICTIONARY, number_of_variables);
 	
-	codec = scarab_dict_new(dictSize, &scarab_dict_times2);
-	
-	
-    for(int i = 0; i < dictSize; i++) {
-        var = master_variable_list[i];
+    map<int, shared_ptr<Variable> >::iterator i;
+    for(i = master_variable_map_by_code.begin(); i != master_variable_map_by_code.end(); ++i) {
+        int key = (*i).first;
+        
+        var = (*i).second;
 		
 		if(var == NULL) { 
             continue; 
         }
         
 		int codec_code = var->getCodecCode();
+        
+        if(codec_code != key){
+            merror(M_SYSTEM_MESSAGE_DOMAIN,
+                   "An internal inconsistency was discovered in the Variable Registry");
+        }
 		
 		if(codec_code == RESERVED_CODEC_CODE) {
 			continue;
@@ -468,17 +433,14 @@ Datum VariableRegistry::generateCodecDatum() {
         Datum serialized_var(props->operator Datum());
 		
         if(serialized_var.isUndefined()) {
-            mdebug("local parameter null value at param (%d)", i);
+            mwarning(M_SYSTEM_MESSAGE_DOMAIN, "Invalid variable during codec generation (codec code: %d)", codec_code);
         }
-		ScarabDatum *codec_key = scarab_new_integer(codec_code);
-        scarab_dict_put(codec, codec_key, serialized_var.getScarabDatum());
-		scarab_free_datum(codec_key);
+		
+        Datum key_datum((long)key);
+        return_codec.addElement(key_datum, serialized_var);
     }
 	
-	
-    Datum returnCodec(codec);
-	scarab_free_datum(codec);
-    return returnCodec;  
+    return return_codec;  
 }
 
 

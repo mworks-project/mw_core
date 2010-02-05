@@ -147,6 +147,7 @@ class VariableProperties {
         // Constructs an interface setting from a scarab object.
         // used in network communication
         VariableProperties(ScarabDatum * datum);
+        VariableProperties(Datum properties_datum);
         
         //copy constructor
         VariableProperties(VariableProperties& copy);

@@ -129,6 +129,22 @@ VariableProperties::VariableProperties(Datum * def,
 	groups = parseGroupList(_groups);
 }
 
+VariableProperties::VariableProperties(Datum datum) {
+    tagname = (string)datum.getElement("tagname");
+    shortname = (string)datum.getElement("shortname");
+    longname = (string)datum.getElement("longname");
+    editable = (mw::WhenType)((int)datum.getElement("editable"));
+    viewable = (bool)datum.getElement("viewable");
+    domain = (mw::DomainType)((int)datum.getElement("domain"));
+    logging = (mw::WhenType)((int)datum.getElement("logging"));
+    defaultvalue = datum.getElement("defaultvalue");
+    
+    // TODO: <more-work-to-be-done>
+    //groups = (vector<string>) datum.getElement("groups");
+    
+}
+
+
 VariableProperties::VariableProperties(ScarabDatum * datum) {
     ScarabDatum *runner, *string_datum;
     if(datum->type != SCARAB_DICT) {

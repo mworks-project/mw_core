@@ -106,10 +106,10 @@ private:
 protected:
     
 	// all variables, in codec order
-	vector< shared_ptr<Variable> > master_variable_list;
+	map < int, shared_ptr<Variable> > master_variable_map_by_code;
 	
     // for faster lookups by tag name
-    map< string, shared_ptr<Variable> > master_variable_dictionary;
+    map< string, shared_ptr<Variable> > master_variable_map_by_name;
     
 	// just the local variables
 	vector< shared_ptr<Variable> > local_variable_list;
@@ -132,6 +132,9 @@ protected:
 	
 	shared_ptr<ConstantVariable> addConstantVariable(Datum value);
 	
+    // Get a new unique codec code
+    int assignNewCodecCode();
+    
 
 public:
 		

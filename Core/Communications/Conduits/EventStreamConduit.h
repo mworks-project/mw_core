@@ -107,10 +107,14 @@ public:
         vector<Datum> keys = codec.getKeys();
         
         // build a map to aid in accessing the codec
-        for(int i=0; i < keys.size(); i++){
+        vector<Datum>::iterator i;        
+        for(i=keys.begin(); i != keys.end(); ++i){
             
-            Datum key = keys[i];
-            Datum value = codec.getElement(keys[i]);
+            Datum key = *i;
+            
+            if(key.isUndefined()) continue;
+            
+            Datum value = codec.getElement(key);
             string tagname;
             if(value.getDataType() == M_STRING){
                 tagname = value.getString();
