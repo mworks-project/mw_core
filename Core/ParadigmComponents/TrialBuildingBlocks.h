@@ -561,8 +561,8 @@ class RejectSelectionsFactory : public ComponentFactory{
 class If : public Action {
 protected:
 	shared_ptr<Variable> condition;
-	ExpandableList<Action> actionlist;
-	ExpandableList<Action> elselist;	
+	vector< shared_ptr<Action> > actionlist;
+	vector< shared_ptr<Action> > elselist;	
 public:
 	If(shared_ptr<Variable> v1);
 	virtual ~If();
@@ -632,8 +632,8 @@ public:
 
 class TaskSystemState : public State {
 protected:
-	ExpandableList<Action> *action_list;
-	ExpandableList<TransitionCondition> *transition_list;
+	vector< shared_ptr<Action> > action_list;
+	vector< shared_ptr<TransitionCondition> > transition_list;
 	bool done;
 public:
 	TaskSystemState();
@@ -648,14 +648,7 @@ public:
 						  ComponentRegistry *reg, shared_ptr<mw::Component> comp);
 	virtual void addAction(shared_ptr<Action> act);
 	virtual void addTransition(shared_ptr<TransitionCondition> trans);
-	
-	
-	ExpandableList<Action> * getActionList();
-	ExpandableList<TransitionCondition> * getTransitionList();
-	void setActionList(ExpandableList<Action> *al){  action_list = al; }
-	void setTransitionList(ExpandableList<TransitionCondition> *tl){  
-		transition_list = tl;
-	}  
+
 };
 
 class TaskSystemStateFactory : public ComponentFactory{	
@@ -705,9 +698,7 @@ public:
 	
 	
 	virtual weak_ptr<State> getStartState();
-	//mExpandableList<State> * getTaskSystemStates();
 	
-	//void setTaskSystemStates(ExpandableList<State> *states){ list = states; }
 };
 
 class TaskSystemFactory : public ComponentFactory{	

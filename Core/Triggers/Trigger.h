@@ -13,7 +13,7 @@
 #include "GenericVariable.h"
 #include "Lockable.h"
 #include "Utilities.h"
-#include "ExpandableList.h"
+
 namespace mw {
 class Trigger {
 
@@ -41,7 +41,7 @@ protected:
 
 	shared_ptr<Variable> trigger_variable;
 	
-	ExpandableList<AsynchronousTriggerNotification> *notifications;
+	vector< shared_ptr<AsynchronousTriggerNotification> > notifications;
 
 public:
 	

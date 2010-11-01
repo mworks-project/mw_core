@@ -12,48 +12,33 @@ using namespace mw;
 
 DoneTableSelection::DoneTableSelection(Selectable *_selectable, bool _autoreset) : Selection(_selectable, _autoreset){
 	done_table_samples = 0;
-	done_table = new ExpandableList<int>(getNItems());
+    
 	nelements = getNItems();
 	for(int i = 0; i < nelements; i++) {
-		done_table->addElement(i, 0);
+		done_table.push_back(0);
 	}
 }
 
 DoneTableSelection::DoneTableSelection() : Selection() {
 	done_table_samples = 0;
-	done_table = new ExpandableList<int>();
-	nelements = getNItems();
+	
+    nelements = getNItems();
 	for(int i = 0; i < nelements; i++) {
-		done_table->addElement(i, 0);
+		done_table.push_back(0);
 	}
 }
 
-DoneTableSelection::DoneTableSelection(const DoneTableSelection& tocopy) :
-Selection(tocopy){
-	
-	done_table_samples = tocopy.done_table_samples;
-	done_table = new ExpandableList<int>(*(tocopy.done_table));
-	nelements = tocopy.nelements;
-	nper = tocopy.nper;
-}
-
-DoneTableSelection::~DoneTableSelection() {
-	// 1) is it safe to delte this
-	// 2) should change to using new/delete operators
-	// TODO
-	delete done_table;
-}
+DoneTableSelection::~DoneTableSelection() { }
 
 // default increase in size routine. Just makes sure no memory problems
 void DoneTableSelection::incrementNItems() {
-	//nitems++;
-	done_table->addElement(0);
+	done_table.push_back(0);
 }
 
 // probably needs overloading...
 void DoneTableSelection::resetDoneTable() {
 	for(int i = 0; i < nelements; i++){
-		done_table->addElement(i,0);
+		done_table.push_back(0);
 	}
 };
 

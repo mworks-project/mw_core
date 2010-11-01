@@ -348,13 +348,6 @@ void StateReference::update(){
 	state->update();
 }
 
-//mContainerState::ContainerState(Experiment *exp) : 
-//	 State(exp),
-//	 list(new vector< shared_ptr<State> >){
-//	 
-//	accessed = false;
-//	setName("mContainerState");
-//}
 
 ContainerState::ContainerState() : 
 	State(),
@@ -364,43 +357,11 @@ ContainerState::ContainerState() :
 	setName("mContainerState");
 }
 
-/*ContainerState::ContainerState(State *parent) : State(parent){
-	list = new ExpandableList<State>();
-	accessed = false;
-}*/
 
-ContainerState::~ContainerState() {
-/*	if(!isAClone()){
-		delete(list);
-	}	*/
-}
-
-/*void ContainerState::addState(shared_ptr<State> newstate) {
-
-	if(newstate == NULL) {
-		return;
-		//throw("Attempt to add a null state to a list state");
-	}
-	
-	// add the new object to the expandable list
-	list->addReference(newstate);
-	newstate->setParent(this);
-	
-	// recurse throughout the hierarchy to update parents, 
-	// LocalScopedVariableContext, & experiment
-	////newstate->updateHierarchy(); 
-	
-}
-	
-void ContainerState::addState(int index, shared_ptr<State> newstate) { 
-	list->addReference(index, newstate);
-	newstate->setParent(this);
-	newstate->updateHierarchy(); 
-}*/
+ContainerState::~ContainerState() { }
 
 
 shared_ptr<mw::Component> ContainerState::createInstanceObject(){
-//void *ContainerState::scopedClone(){
 
 	ContainerState *new_state = new ContainerState();
 	new_state->setExperiment(getExperiment());
@@ -416,11 +377,6 @@ shared_ptr<mw::Component> ContainerState::createInstanceObject(){
 	return clone_ptr;
 }
 
-//
-//mListState::ListState(State *newparent): ContainerState(newparent) {
-//	has_more_children_to_run = true;
-//	setName((char *)"base ListState");
-//}
 
 ListState::ListState() : ContainerState() {
 
@@ -428,26 +384,17 @@ ListState::ListState() : ContainerState() {
 	setName((char *)"base ListState");
 }
 
-ListState::~ListState() {
-	
-	
-	//delete(local_variable_context);
-}
+ListState::~ListState() { }
 
 
 shared_ptr<mw::Component> ListState::createInstanceObject(){
-//void *ListState::scopedClone(){
 
 	ListState *new_state = new ListState();
 	new_state->setParent(parent);
-	//new_state->setLocalScopedVariableContext(new ScopedVariableContext());
-	new_state->setExperiment(getExperiment());
+    new_state->setExperiment(getExperiment());
 	new_state->setScopedVariableEnvironment(getScopedVariableEnvironment());
 	new_state->setDescription(getDescription());
 	new_state->setName(getName());
-	
-	//new_state->setN(getN());
-	//new_state->setSamplingMethod(getSamplingMethod());
 	
 
 	new_state->setList(list);
@@ -455,14 +402,8 @@ shared_ptr<mw::Component> ListState::createInstanceObject(){
 	shared_ptr<Selection> sel = getSelectionClone();
 	if(sel != shared_ptr<Selection>()){
 		new_state->attachSelection(sel);
-		//new_state->setSelection((Selection *)(sel->clone()));
 	}
-	
-	// TODO: was this safe to remove?
-	/*if(new_state->getSelection() != NULL){
-		(new_state->getSelection())->setNItems(list->getNElements());
-	}*/
-	
+		
 	new_state->setIsAClone(true);	// in case we care for memory-freeing purposes
 	shared_ptr<mw::Component> clone_ptr(new_state);
 	return clone_ptr;
@@ -659,9 +600,6 @@ weak_ptr<State> ListState::next() {
 		thestate->updateCurrentScopedVariableContext();
 		return thestate;		
 	} else {
-		//mprintf("Returning Parent!!!");	
-		// wait a bit so that I can see what's going on...
-		//tick(10000); 
 		// update my parent to update done tables, etc.
 		shared_ptr<State> parent_shared(parent);
 		parent_shared->update(); 
@@ -695,9 +633,6 @@ void ListState::reset() {
 
 int ListState::getNItems() { return getNChildren(); }
 
-
-//template <class U, class E>
-//void setInfo(E, U){};
 
 shared_ptr< vector< shared_ptr<State> > > ContainerState::getList() { return list; }
 void ContainerState::setList(shared_ptr< vector< shared_ptr<State> > > newlist){  list = newlist; }

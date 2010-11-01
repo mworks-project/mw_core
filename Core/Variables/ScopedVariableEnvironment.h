@@ -20,7 +20,7 @@ class ScopedVariableEnvironment {
 
 	protected:
 	
-		ExpandableList<ScopedVariable> variables;
+		vector< shared_ptr<ScopedVariable> > variables;
 		shared_ptr<ScopedVariableContext> current_context;
 
 	public:
@@ -45,7 +45,7 @@ class ScopedVariableEnvironment {
 		}
 		
 		int getNVariables(){
-			return variables.getNElements();
+			return variables.size();
 		}
 	
 		// ScopedVariable delegate methods

@@ -21,7 +21,7 @@ ScheduledActions::ScheduledActions(shared_ptr<Variable> _n_repeats,
 }
 
 void ScheduledActions::addAction(shared_ptr<Action> _action){
-	action_list.addReference(_action);
+	action_list.push_back(_action);
 }
 
 void ScheduledActions::addChild(std::map<std::string, std::string> parameters,
@@ -76,10 +76,12 @@ unsigned int ScheduledActions::getNRepeated() const {
 }
 
 void ScheduledActions::executeActions() {
-	for(int i = 0; i < action_list.getNElements(); i++){
-		action_list[i]->announceEntry();
-		action_list[i]->execute();
-		action_list[i]->announceExit();
+
+    vector< shared_ptr<Action> >::iterator i;
+	for(i = action_list.begin(); i != action_list.end(); ++i){
+		(*i)->announceEntry();
+		(*i)->execute();
+		(*i)->announceExit();
 	}
 	++nRepeated;
 }

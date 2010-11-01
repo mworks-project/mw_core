@@ -20,7 +20,7 @@ class SelectionVariable :  public Selectable, public Variable {
 
 protected:
 
-	ExpandableList<Variable> values;
+	vector< shared_ptr<Variable> > values;
 	shared_ptr<Variable> selected_value;
 public:
 
@@ -31,14 +31,11 @@ public:
 	//mSelectionVariable(const SelectionVariable& tocopy);
 		
 				
-	virtual ~SelectionVariable(){
-		values.releaseElements();
-		
-	}
+	virtual ~SelectionVariable(){ }
 	
 
 	virtual void addValue(shared_ptr<Variable> _var){
-		values.addReference(_var);
+		values.push_back(_var);
 		if(selection != NULL){
 			selection->reset();
 		}
@@ -59,7 +56,7 @@ public:
 	virtual void setValue(Datum data, MWTime time){ return; }
 	virtual void setSilentValue(Datum data){  return; }
 	
-	virtual int getNChildren(){ return values.getNElements();  }
+	virtual int getNChildren(){ return values.size();  }
 	
 			
 	// From Selectable

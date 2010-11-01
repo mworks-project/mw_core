@@ -18,39 +18,41 @@
 //#include <OpenAL/alut.h>
 #include "alut.h"
 
-#include "ExpandableList.h"
 #include "Utilities.h"
 
+#include <boost/format.hpp>
+
+
 namespace mw {
-	class ALContext{
+
+    class ALDevice{
 		
-	public:
-		ALCcontext *context;
+        protected:
+        
+        ALCdevice *device;
+        int error;
+        
+        public:
 		
-		ALContext(ALCcontext *_context){
-			context = _context;
-		}
-		
-		operator ALCcontext *(){
-			return context;
-		}
-		
-		void operator= (ALCcontext *_context){
-			context = _context;
-		}
-		
-		ALCcontext *getContext(){ return context; }
-	};
-	
-	class ALDevice{
-		
-	public:
-		
-		ALCdevice *device;
-		
+        ALDevice(){
+            device = alcOpenDevice(NULL);
+            if ((error = alGetError()) != AL_NO_ERROR) { 
+                throw SimpleException((boost::format("Failed to open OpenAL sound device (error code %d)") % error).str());
+            }
+        }
+        
 		ALDevice(ALCdevice *_device){
 			device = _device;
 		}
+        
+        ~ALDevice(){
+            alcCloseDevice(device);
+            if ((error = alGetError()) != AL_NO_ERROR) { 
+                merror(M_SYSTEM_MESSAGE_DOMAIN,
+                       "Failed to close OpenAL sound device (error code %d)",
+                       error);
+            }
+        }
 		
 		operator ALCdevice *(){
 			return device;
@@ -60,19 +62,62 @@ namespace mw {
 			device = _device;
 		}
 		
-		ALCdevice *getDevice(){ return device; }
+		ALCdevice *getRawDevice(){ return device; }
 	};
 	
+
+
+	class ALContext{
+		
+        protected:
+        
+        ALCcontext *context;
+        int error;
+        
+        public:
+		
+		ALContext(shared_ptr<ALDevice> device, const ALCint *attrlist){
+            context = alcCreateContext(device->getRawDevice(), attrlist);
+        }
+        
+		ALContext(ALCcontext *_context){
+			context = _context;
+		}
+        
+        ~ALContext(){
+            alcDestroyContext(context);
+        }
+		
+		operator ALCcontext *(){
+			return context;
+		}
+		
+		void operator= (ALCcontext *_context){
+			context = _context;
+		}
+        
+        void setCurrent(){
+            alcMakeContextCurrent(context);
+            if ((error = alGetError()) != AL_NO_ERROR) { 
+                throw SimpleException((boost::format("Failed to set default OpenAL context current (error code %d)") % error).str());
+            }
+            
+        }
+		
+		ALCcontext *getRawContext(){ return context; }
+	};
+	
+
 	
 	class OpenALContextManager {
 		
 	protected:
 		
-		ALCdevice *default_device;
-		ExpandableList<ALDevice> *devices;
+		shared_ptr<ALDevice> default_device;
+		vector< shared_ptr<ALDevice> > devices;
 		
-		ALCcontext *default_context;
-		ExpandableList<ALContext> *contexts;
+		shared_ptr<ALContext> default_context;
+		vector< shared_ptr<ALContext> > contexts;
 		
 		ALuint error;
 		
@@ -81,7 +126,7 @@ namespace mw {
 		OpenALContextManager();
 		~OpenALContextManager();
 		
-		ALCcontext *getDefaultContext();
+		shared_ptr<ALContext> getDefaultContext();
 		void setCurrent(int i);
 		void setDefaultContextCurrent();
 		

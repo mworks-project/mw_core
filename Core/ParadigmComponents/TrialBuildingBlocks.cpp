@@ -1136,7 +1136,7 @@ If::~If() { }
 
 void If::addAction(shared_ptr<Action> act) {
 	act->setOwner(getOwner());
-	actionlist.addReference(act);
+	actionlist.push_back(act);
 }
 
 void If::addChild(std::map<std::string, std::string> parameters,
@@ -1152,12 +1152,15 @@ void If::addChild(std::map<std::string, std::string> parameters,
 
 bool If::execute() {
     if((bool)(*condition)) {
-        for(int i=0; i < actionlist.getNElements(); i++) {
-            actionlist[i]->execute();
+    
+        vector< shared_ptr<Action> >::iterator i;
+        for(i = actionlist.begin(); i != actionlist.end(); ++i) {
+            (*i)->execute();
         }
     } else {
-        for(int i = 0; i < elselist.getNElements(); i++) {
-			elselist[i]->execute();
+        vector< shared_ptr<Action> >::iterator i;
+        for(i = elselist.begin(); i != elselist.end(); ++i) {
+            (*i)->execute();
         }
     }
 	return true;
@@ -1406,65 +1409,26 @@ weak_ptr<State> YieldToParent::execute() {
  ****************************************************************/
 TaskSystemState::TaskSystemState() : State() {
     done = false;
-	action_list = new ExpandableList<Action>(4);
-	transition_list = new ExpandableList<TransitionCondition>(4);
-	name = "mTaskSystemState";
+	name = "TaskSystemState";
 }
 
-//mTaskSystemState::TaskSystemState(State *parent) : State(parent) {
-//	done = false;
-//	action_list = new ExpandableList<Action>(4);
-//	transition_list = new ExpandableList<TransitionCondition>(4);
-//	name = "mTaskSystemState";
-//}
 
-TaskSystemState::~TaskSystemState() {
-    
-	if(!isAClone()){
-		if(action_list) {
-			delete action_list;
-			action_list = NULL;
-		}
-		if(transition_list) {
-			delete transition_list;
-			transition_list = NULL;
-		}
-	}
-}
+TaskSystemState::~TaskSystemState() { }
 
 shared_ptr<mw::Component> TaskSystemState::createInstanceObject(){
-	//void *TaskSystemState::scopedClone(){
 	
 	shared_ptr<mw::Component> alias(getSelfPtr<mw::Component>());
 	return alias;
-	
-	//mTaskSystemState *new_state = new TaskSystemState();
-//	new_state->setParent(parent);
-//	//new_state->setLocalScopedVariableContext(getLocalScopedVariableContext());
-//	new_state->setExperiment(getExperiment());
-//	new_state->setScopedVariableEnvironment(getScopedVariableEnvironment());
-//	new_state->setDescription(getDescription());
-//	new_state->setName(getName());
-//	
-//	// TODO: copy the list objects?
-//	new_state->setActionList(action_list);
-//	new_state->setTransitionList(transition_list);
-//	
-//	new_state->setIsAClone(true);	// in case we care for memory-freeing purposes
-//	
-//	shared_ptr<mw::Component> clone_ptr(new_state);
-//	return clone_ptr;
-//	
 }
 
 void TaskSystemState::action() {
 	currentState->setValue(getCompactID());
-	//currentState->setValue(name);
+	
 	if(!done) {
-		int nelem = action_list->getNElements();
-		for(int i=0; i < nelem; i++) {
+        vector< shared_ptr<Action> >::iterator i;
+		for(i = action_list.begin(); i != action_list.end(); ++i) {
 			
-			shared_ptr<Action> the_action = (*action_list)[i]; 
+			shared_ptr<Action> the_action = *i; 
 			
 			if(the_action == NULL){
 				continue;
@@ -1480,26 +1444,20 @@ void TaskSystemState::action() {
 	}
 }
 
-/*void TaskSystemState::announceIdentity(){
- std::string announcement("Task System State: " + name);	
- announceState(announcement.c_str());
- Datum announceString;
- announceString.setString(announcement);
- currentState->setValue(announceString);
- }*/
 
 weak_ptr<State> TaskSystemState::next() {
     weak_ptr<State> trans;
-	if(transition_list->getNElements() == 0) {
+    
+	if(transition_list.size() == 0) {
 		mprintf("Error: no valid transitions. Ending experiment");
 		trans = weak_ptr<State>(GlobalCurrentExperiment);
 		return trans;
 	}			
 	
-	int nelem = transition_list->getNElements();
-	for(int i = 0; i < nelem; i++) {
-		//cerr << "t" << i <<  "(" << (*transition_list)[i] << ")" << endl;
-		trans = (*transition_list)[i]->execute();
+    vector< shared_ptr<TransitionCondition> >::iterator i;
+	for(i = transition_list.begin(); i != transition_list.end(); ++i) {
+
+		trans = (*i)->execute();
 		if(!trans.expired()) {
 			shared_ptr<State> trans_shared(trans);
 			done = false;
@@ -1540,7 +1498,7 @@ void TaskSystemState::addAction(shared_ptr<Action> act) {
 		return;
     }
 	act->setOwner(getSelfPtr<State>());
-	action_list->addReference(act);
+	action_list.push_back(act);
 }
 
 void TaskSystemState::addTransition(shared_ptr<TransitionCondition> trans) {
@@ -1549,16 +1507,10 @@ void TaskSystemState::addTransition(shared_ptr<TransitionCondition> trans) {
 		return;
 	}
 	trans->setOwner(getSelfPtr<State>());
-	transition_list->addReference(trans);
+	transition_list.push_back(trans);
 }
 
-ExpandableList<Action> * TaskSystemState::getActionList() {
-    return action_list;
-}
 
-ExpandableList<TransitionCondition> * TaskSystemState::getTransitionList() {
-    return transition_list;
-}
 
 /****************************************************************
  *                 WaitState Methods

@@ -47,20 +47,10 @@ AsynchronousTriggerNotification::AsynchronousTriggerNotification(
 */
 AsynchronousTrigger::AsynchronousTrigger(shared_ptr<Variable> _trigger){
 	trigger_variable = _trigger;
-	notifications = new ExpandableList<AsynchronousTriggerNotification>();
 }
 
 
-AsynchronousTrigger::~AsynchronousTrigger(){
-	for (int i=0; i<notifications->getNElements(); ++i) {
-		shared_ptr <AsynchronousTriggerNotification> notif = notifications->getElement(i);
-		notif->remove();
-	}
-	
-	delete notifications; // this will delete all of the notifications and,
-						  // better yet, remove them from their corresponding
-						  // variables' notification chains
-}
+AsynchronousTrigger::~AsynchronousTrigger(){ }
 
 // JJD added this -- a non-active trigger cannot be true.
 //  Some triggers come and go (e.g. fixation points), so they may need
@@ -89,7 +79,7 @@ void AsynchronousTrigger::addVariable(shared_ptr<Variable> var){
 									new AsynchronousTriggerNotification(this));
 	var->addNotification(notif);
 	
-	notifications->addReference(notif);
+	notifications.push_back(notif);
 }
 
 GreaterThanThresholdTrigger::GreaterThanThresholdTrigger(

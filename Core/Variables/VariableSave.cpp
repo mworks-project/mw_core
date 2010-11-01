@@ -11,7 +11,6 @@
 #include "VariableSave.h"
 #include "Experiment.h"
 #include "GenericData.h"
-#include "ExpandableList.h"
 #include "PlatformDependentServices.h"
 #include "XMLVariableWriter.h"
 

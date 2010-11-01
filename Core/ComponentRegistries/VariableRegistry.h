@@ -71,7 +71,6 @@
 #include "SelectionVariable.h"
 #include "Timer.h"
 #include "VariableProperties.h"
-#include "ExpandableList.h"
 #include "ScopedVariableContext.h"
 #include "Scarab/scarab.h"
 

@@ -198,7 +198,6 @@ shared_ptr<Variable> VariableRegistry::getVariable(int codec_code) {
 	boost::mutex::scoped_lock s_lock((boost::mutex&)lock);
 	
     // DDC: removed what was this for?
-	//mExpandableList<Variable> list(master_variable_list);
 	
 	if(codec_code < 0 || codec_code > master_variable_list.size() + N_RESERVED_CODEC_CODES){
 		merror(M_SYSTEM_MESSAGE_DOMAIN,

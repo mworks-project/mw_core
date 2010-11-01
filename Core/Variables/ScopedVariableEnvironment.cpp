@@ -18,8 +18,9 @@ ScopedVariableEnvironment::ScopedVariableEnvironment() : variables(){
 
 // Add a new scoped variable to this environment
 int ScopedVariableEnvironment::addVariable(shared_ptr<ScopedVariable> var){
-	int index = variables.addReference(var);
-	var->setContextIndex(index);
+	variables.push_back(var);
+	int index = variables.size() - 1;
+    var->setContextIndex(index);
 	var->setEnvironment(this);
 	
 	return index;
@@ -38,8 +39,9 @@ shared_ptr<ScopedVariableContext> ScopedVariableEnvironment::createNewDefaultCon
 
 	shared_ptr<ScopedVariableContext> new_context = createNewContext();
 	
-	for(int i = 0; i < variables.getNElements(); i++){
-		shared_ptr<ScopedVariable> var = variables[i];
+    vector< shared_ptr<ScopedVariable> >::iterator i;
+	for(i = variables.begin(); i != variables.end(); ++i){
+		shared_ptr<ScopedVariable> var = *i;
 		VariableProperties *props = var->getProperties();
 		new_context->set(var->getContextIndex(), props->getDefaultValue());
 	}
@@ -77,8 +79,10 @@ void ScopedVariableEnvironment::setValue(int index, Datum value){
 
 
 void ScopedVariableEnvironment::announceAll(){
-	for(int i = 0; i < variables.getNElements(); i++){
-		shared_ptr<ScopedVariable> var = variables[i];
+    
+    vector< shared_ptr<ScopedVariable> >::iterator i;
+	for(i = variables.begin(); i != variables.end(); ++i){
+		shared_ptr<ScopedVariable> var = *i;
 		if(var != shared_ptr<ScopedVariable>()){
 			var->announce();
 			//TODO Maybe this needs to be here?

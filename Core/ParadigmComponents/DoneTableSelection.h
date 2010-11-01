@@ -16,7 +16,7 @@ namespace mw {
 // Base Class for Selection with a "Done" table of some sort 
 class DoneTableSelection : public Selection {
 protected:
-	ExpandableList<int> *done_table;
+	vector<int> done_table;
 	int nelements;
 	int nper;
 	// how many samples are actually required to empty the done table

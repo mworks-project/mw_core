@@ -15,7 +15,7 @@
 namespace mw {
 	class ScheduledActions : public Action, public enable_shared_from_this<ScheduledActions> {
 	protected:
-		ExpandableList<Action> action_list;
+		vector< shared_ptr<Action> > action_list;
 		shared_ptr<Variable> delay;
 		shared_ptr<Variable> n_repeats;
 		shared_ptr<Variable> interval;
