@@ -21,11 +21,11 @@ namespace mw {
 	// Stall or proceed according to the settings of the debugging variables
 	void debuggerCheck(){
 		
-		if(!debuggerRunning->getValue()){
+		if(!StandardVariables::debuggerRunning->getValue()){
 			
-			while(!debuggerRunning->getValue()){
-				if((long)(debuggerStep->getValue()) > 0){
-					debuggerStep->setValue((long)debuggerStep->getValue() - 1);
+			while(!StandardVariables::debuggerRunning->getValue()){
+				if((long)(StandardVariables::debuggerStep->getValue()) > 0){
+					StandardVariables::debuggerStep->setValue((long)StandardVariables::debuggerStep->getValue() - 1);
 					break;
 				}
 				shared_ptr <Clock> clock = Clock::instance();

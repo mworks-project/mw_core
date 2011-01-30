@@ -24,7 +24,7 @@ Client::Client() : RegistryAwareEventStreamInterface(M_CLIENT_MESSAGE_DOMAIN, tr
     
 	registry = shared_ptr<VariableRegistry>(new VariableRegistry(outgoing_event_buffer));
 	
-	initializeStandardVariables(registry);
+	StandardVariables::initializeStandardVariables(registry);
 	message_variable = registry->getVariable(ANNOUNCE_MESSAGE_VAR_TAGNAME);
 	
 	
@@ -171,7 +171,7 @@ void  Client::sendUnpauseEvent() {
 void  Client::sendOpenDataFileEvent(const std::string &filename, 
 									 const int options) {
     if(filename.size() == 0) { return; }
- DatumFileOptions overwrite = options ? M_OVERWRITE : M_NO_OVERWRITE;
+ DataFileOptions overwrite = options ? M_OVERWRITE : M_NO_OVERWRITE;
     putEvent(SystemEventFactory::dataFileOpenControl(filename, 
 																	 overwrite));
 }

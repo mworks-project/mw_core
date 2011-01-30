@@ -23,7 +23,7 @@ namespace mw {
 typedef enum {
     M_OVERWRITE         = 1000,
     M_NO_OVERWRITE      = 1001,
-} DatumFileOptions;
+} DataFileOptions;
 
 class SystemEventFactory {
     public:  
@@ -56,7 +56,7 @@ class SystemEventFactory {
 	static shared_ptr<Event> pauseExperimentControl();
     static shared_ptr<Event> requestCodecControl();
 	static shared_ptr<Event> dataFileOpenControl(std::string  filename, 
-												   DatumFileOptions opt);
+												   DataFileOptions opt);
 	static shared_ptr<Event> closeDataFileControl(std::string filename);
 	static shared_ptr<Event> closeExperimentControl(std::string);
 	static shared_ptr<Event> saveVariablesControl(const std::string &file,

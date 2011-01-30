@@ -58,7 +58,7 @@ StimulusDisplay::StimulusDisplay() :
     }
         
     stateSystemNotification = shared_ptr<VariableCallbackNotification>(new VariableCallbackNotification(boost::bind(&StimulusDisplay::stateSystemCallback, this, _1, _2)));
-    state_system_mode->addNotification(stateSystemNotification);
+    StandardVariables::state_system_mode->addNotification(stateSystemNotification);
 }
 
 StimulusDisplay::~StimulusDisplay(){
@@ -448,7 +448,7 @@ void StimulusDisplay::announceDisplayUpdate(void *_display) {
     }
     
     MWTime now = display->clock->getCurrentTimeUS();
-    stimDisplayUpdate->setValue(display->getAnnounceData(), now);
+    StandardVariables::stimDisplayUpdate->setValue(display->getAnnounceData(), now);
     display->announceDisplayStack(now);
 }
 

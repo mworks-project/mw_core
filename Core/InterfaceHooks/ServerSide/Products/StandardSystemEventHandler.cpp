@@ -69,6 +69,8 @@ void StandardSystemEventHandler::handleSystemEvent(const Datum &sysEvent) {
 			   "badly formed system event");
 		return;
 	}
+    
+    shared_ptr<DataFileManager> data_file_manager;
 	
     switch((SystemPayloadType)payloadType.getInteger()) {
         case M_EXPERIMENT_PACKAGE:
@@ -174,11 +176,13 @@ void StandardSystemEventHandler::handleSystemEvent(const Datum &sysEvent) {
 		case M_OPEN_DATA_FILE:
 		{
 			// issues an event on success
-			GlobalDataFileManager->openFile(sysEvent.getElement(M_SYSTEM_PAYLOAD));
+			data_file_manager = DataFileManager::instance();
+            data_file_manager->openFile(sysEvent.getElement(M_SYSTEM_PAYLOAD));
 			break;
 		}
 		case M_CLOSE_DATA_FILE:
-			GlobalDataFileManager->closeFile();
+			data_file_manager = DataFileManager::instance();
+            data_file_manager->closeFile();
 			break;
 		case M_SAVE_VARIABLES:
 		{

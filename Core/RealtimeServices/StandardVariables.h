@@ -12,15 +12,67 @@
 
 #include "GenericVariable.h"
 #include "VariableRegistry.h"
-namespace mw {
-// Stimuli ======================================================   
+
+
+#define PRIVATE_SYSTEM_VARIABLES "# SYSTEM VARIABLES"
+
+// State System Mode
+#define STATE_SYSTEM_MODE_TAGNAME "#state_system_mode"
+enum {IDLE, STOPPING, RUNNING, TASKMODES};	
+        
+// Server designation
+#define SETUP_NAME_TAGNAME	"#serverName"
+
+// Load progress (for communication with Client)
+#define EXPERIMENT_LOAD_PROGRESS_TAGNAME	"#experimentLoadProgress"
+
+// Basic "Announce" tags
+#define ANNOUNCE_MESSAGE_VAR_TAGNAME "#announceMessage"
+                
+#define ANNOUNCE_CURRENT_STATE_TAGNAME	"#announceCurrentState"
+#define ANNOUNCE_TRIAL_TAGNAME	"#annouceTrial"
+#define ANNOUNCE_BLOCK_TAGNAME	"#announceBlock"
+
+// Enabling "alt" failover of undefined components
+#define ALT_FAILOVER_TAGNAME        "#allowAltFailover"
+                
+// Auto-save behavior
+#define AUTO_SAVE_TAGNAME       "#enableAutoSave"
+                
+// Screen-related setup
+#define	MAIN_SCREEN_INFO_TAGNAME	"#mainScreenInfo"
+    #define M_DISPLAY_WIDTH_KEY					"width"
+    #define M_DISPLAY_HEIGHT_KEY				"height"
+    #define M_DISPLAY_DISTANCE_KEY				"distance"
+    #define M_DISPLAY_TO_USE_KEY				"display_to_use"
+    #define M_ALWAYS_DISPLAY_MIRROR_WINDOW_KEY	"always_display_mirror_window"
+    #define M_MIRROR_WINDOW_BASE_HEIGHT_KEY		"mirror_window_base_height"
+    #define M_REFRESH_RATE_KEY					"refresh_rate_hz"
+        
+
+// Debugging and Testing
+#define DEBUGGER_ACTIVE_TAGNAME "debuggerActive"
+#define DEBUGGER_RUNNING_TAGNAME "debuggerRunning"
+#define DEBUGGER_STEP_TAGNAME "debuggerStep"
+#define ANNOUNCE_ASSERTION_TAGNAME "#announceAssertion"
+
+
+// ------------------------------------------------------------------
+// Stimuli 
+// ------------------------------------------------------------------
+
+#define STIMULUS_DISPLAY_UPDATE_TAGNAME "#stimDisplayUpdate"
 #define ANNOUNCE_STIMULUS_TAGNAME       "#announceStimulus"
-
-
-    // fields of stimulus announce Dictionary vars (not all stim announces contain all fields)
     #define STIM_NAME   "name"
     #define STIM_TYPE   "type"     
+        #define STIM_TYPE_GENERIC           "generic"   
+        #define STIM_TYPE_BASICTRANSFORM    "generic"
+        #define STIM_TYPE_IMAGE             "image"
+        #define STIM_TYPE_POINT             "point"
+        #define STIM_TYPE_BLANK             "blankscreen"
     #define STIM_ACTION "action"
+        #define STIM_ACTION_DRAW            "draw"
+        #define STIM_ACTION_ERASE           "erase"
     #define STIM_POSX   "pos_x"
     #define STIM_POSY   "pos_y"    
     #define STIM_SIZEX  "size_x"
@@ -34,48 +86,37 @@ namespace mw {
     #define STIM_GROUP_NAME  "group"
     #define STIM_GROUP_INDEX "groupIndex"
 
-        // stimulus types (STIM_TYPE above)
-        #define STIM_TYPE_GENERIC           "generic"   
-        #define STIM_TYPE_BASICTRANSFORM    "generic"
-        #define STIM_TYPE_IMAGE             "image"
-        #define STIM_TYPE_POINT             "point"
-        #define STIM_TYPE_BLANK             "blankscreen"
+// ------------------------------------------------------------------
+// Sounds
+// ------------------------------------------------------------------
 
-        // stimulus actions (STIM_ACTION above)
-        #define STIM_ACTION_DRAW            "draw"
-        #define STIM_ACTION_ERASE           "erase"
-
-
-
-// Sounds ===========================================================
 #define ANNOUNCE_SOUND_TAGNAME			"#announceSound"
-
 	#define SOUND_NAME	"name"
 	#define SOUND_FILENAME	"filename"
 
 
+// ------------------------------------------------------------------
+// Calibrators   
+// ------------------------------------------------------------------
 
-// Calibrators ======================================================  
 #define ANNOUNCE_CALIBRATOR_TAGNAME    "#announceCalibrator"
-
-   // fields of calibrator announce
     #define CALIBRATOR_NAME         "name"
     #define CALIBRATOR_ACTION       "action"
-    #define CALIBRATOR_PARAMS_H     "params_H"
-    #define CALIBRATOR_PARAMS_V     "params_V"
-    
-        // calibrator announce actions
         #define CALIBRATOR_ACTION_SAMPLE           "sample"
         #define CALIBRATOR_ACTION_UPDATE_PARAMS    "newParams"
         #define CALIBRATOR_ACTION_IDENTIFY_SELF    "identifySelf"
-
-        // eye calibrator fields associated with "sample" announcement
+    #define CALIBRATOR_PARAMS_H     "params_H"
+    #define CALIBRATOR_PARAMS_V     "params_V"
+    
+         // eye calibrator fields associated with "sample" announcement
         #define CALIBRATOR_SAMPLE_SAMPLED_HV    "sampledHV"
         #define CALIBRATOR_SAMPLE_DESIRED_HV    "desiredHV"
         #define CALIBRATOR_SAMPLE_CALIBRATED_HV "calibratedHV"  
 
-
-// Triggers ======================================================  
+// ------------------------------------------------------------------
+// Triggers
+// ------------------------------------------------------------------
+ 
 #define ANNOUNCE_TRIGGER_TAGNAME        "#announceTrigger"
 
     // Sept 2006 -- JJD note: these are currently only implemented through the 
@@ -85,11 +126,11 @@ namespace mw {
     #define TRIGGER_WIDTH               "width"
 
 
-// ===============================================================
+// ------------------------------------------------------------------
+// Calibrators
+// ------------------------------------------------------------------
 
-// Request variables are used by the client to  
 #define REQUEST_CALIBRATOR_TAGNAME     "#requestCalibrator"
-
    // fields calibrator request
     #define R_CALIBRATOR_NAME       "name"
     #define R_CALIBRATOR_ACTION     "action"
@@ -100,92 +141,51 @@ namespace mw {
     #define R_CALIBRATOR_ACTION_SET_PARAMETERS                 "set_params"
     #define R_CALIBRATOR_ACTION_SET_PARAMETERS_TO_DEFAULTS     "set_params_default"
     
-
 // private data
 #define PRIVATE_CALIBRATOR_TAGNAME     "#privateCalibrator"
 
 
-// ======================================================  
-// defines for state system modes
-enum {IDLE, STOPPING, RUNNING, TASKMODES};	
 
+namespace mw {
+    
+    class StandardVariables {
+        
+        
+        public:
+        
+        // The variable that controls the state system
+        static shared_ptr<Variable> state_system_mode;
 
+        // The variable "channel" through which system messages are piped
+        static shared_ptr<Variable> GlobalMessageVariable;
+        
+        // Announcements regard movement through the state system
+        static shared_ptr<Variable> currentState;
+        static shared_ptr<Variable> trialAnnounce;
+        static shared_ptr<Variable> blockAnnounce;
+                
+        // Stimulus Related
+        static shared_ptr<Variable> mainDisplayInfo;		
+        static shared_ptr<Variable> stimDisplayUpdate;
+        static shared_ptr<Variable> beamPosition;		// DDC added as an experiment, Aug 2006
 
-#define PRIVATE_SYSTEM_VARIABLES "# SYSTEM VARIABLES"
+        // Communication with client
+        static shared_ptr<Variable> serverName;
+        static shared_ptr<Variable> experimentLoadProgress;
 
+        // Controlling mission-critical behavior on the server
+        static shared_ptr<Variable> alt_failover;  // allow semi-quiet component failover
+        static shared_ptr<Variable> auto_save;  // automatically save everything to a temp file
 
-extern shared_ptr<Variable> state_system_mode;
-
-#define STATE_SYSTEM_MODE_TAGNAME "#state_system_mode"
-
-#define STIMULUS_DISPLAY_UPDATE_TAGNAME "#stimDisplayUpdate"
-extern shared_ptr<Variable> stimDisplayUpdate;
-
-extern shared_ptr<Variable> GlobalMessageVariable;
-#define ANNOUNCE_MESSAGE_VAR_TAGNAME "#announceMessage"
-
-
-#define ANNOUNCE_CURRENT_STATE_TAGNAME	"#announceCurrentState"
-extern shared_ptr<Variable> currentState;
-
-#define ANNOUNCE_TRIAL_TAGNAME	"#annouceTrial"
-#define ANNOUNCE_BLOCK_TAGNAME	"#announceBlock"
-
-extern shared_ptr<Variable> trialAnnounce;
-extern shared_ptr<Variable> blockAnnounce;
-
-#define ANNOUNCE_ASSERTION_TAGNAME "#announceAssertion"
-extern shared_ptr<Variable> assertionFailure;
-
-#define SETUP_NAME_TAGNAME	"#serverName"
-extern shared_ptr<Variable> serverName;
-
-
-#define EXPERIMENT_LOAD_PROGRESS_TAGNAME	"#experimentLoadProgress"
-extern shared_ptr<Variable> experimentLoadProgress;
-
-extern shared_ptr<Variable> beamPosition;		// DDC added as an experiment, Aug 2006
-
-/*        sampleSource,
-        spikeSource,
-        leverSource,
-        dataFileOpen,
-        writingToDisk,
-        eyePosHRaw,
-        eyePosVRaw,
-        eyePosHDeg,
-        eyePosVDeg,
-        trialStart,
-        trialEnd,
-        spikeZero,
-        myEyePosRawX,
-        myEyePosRawY;*/
-
-#define	MAIN_SCREEN_INFO_TAGNAME	"#mainScreenInfo"
-#define ALT_FAILOVER_TAGNAME        "#allowAltFailover"
-
-#define M_DISPLAY_WIDTH_KEY					"width"
-#define M_DISPLAY_HEIGHT_KEY				"height"
-#define M_DISPLAY_DISTANCE_KEY				"distance"
-#define M_DISPLAY_TO_USE_KEY				"display_to_use"
-#define M_ALWAYS_DISPLAY_MIRROR_WINDOW_KEY	"always_display_mirror_window"
-#define M_MIRROR_WINDOW_BASE_HEIGHT_KEY		"mirror_window_base_height"
-#define M_REFRESH_RATE_KEY					"refresh_rate_hz"
-extern shared_ptr<Variable> mainDisplayInfo;		
-extern shared_ptr<Variable> alt_failover;
-
-// Debugger variables
-#define DEBUGGER_ACTIVE_TAGNAME "debuggerActive"
-extern shared_ptr<Variable> debuggerActive;
-
-#define DEBUGGER_RUNNING_TAGNAME "debuggerRunning"
-extern shared_ptr<Variable> debuggerRunning;
-
-#define DEBUGGER_STEP_TAGNAME "debuggerStep"
-extern shared_ptr<Variable> debuggerStep;
+        // Debugging and testing
+        static shared_ptr<Variable> debuggerActive;
+        static shared_ptr<Variable> debuggerRunning;
+        static shared_ptr<Variable> debuggerStep;
+        static shared_ptr<Variable> assertionFailure;
 
         
-void initializeStandardVariables(shared_ptr<VariableRegistry> registry);
+        static void initializeStandardVariables(shared_ptr<VariableRegistry> registry);
+    };
 }
 #endif STANDARD_VARIABLES_H
 

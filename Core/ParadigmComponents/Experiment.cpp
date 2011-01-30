@@ -119,7 +119,7 @@ void Experiment::update() {
     // we got called from the protocol we were running, so we're done for now
     ///setInt(taskMode_edit, IDLE);
     current_state = weak_ptr<State>();
-	*state_system_mode = STOPPING;
+	*StandardVariables::state_system_mode = STOPPING;
 }
 
 

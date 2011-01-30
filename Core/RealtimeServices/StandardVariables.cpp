@@ -20,31 +20,35 @@
 using namespace mw;
 
 namespace mw {
-	shared_ptr<Variable> state_system_mode; 
-	shared_ptr<Variable> GlobalMessageVariable; 
-	shared_ptr<Variable> GlobalSystemEventVariable; 
-	shared_ptr<Variable> stimDisplayUpdate;   // JJD added June 2006
-	shared_ptr<Variable> beamPosition;		// DDC added as an experiment, Aug 2006
-	shared_ptr<Variable> mainDisplayInfo;
-	shared_ptr<Variable> currentState;
+
+
+	shared_ptr<Variable> StandardVariables::state_system_mode; 
+	shared_ptr<Variable> StandardVariables::GlobalMessageVariable; 
+	//shared_ptr<Variable> StandardVariables::GlobalSystemEventVariable; 
+	shared_ptr<Variable> StandardVariables::stimDisplayUpdate;   // JJD added June 2006
+	shared_ptr<Variable> StandardVariables::beamPosition;		// DDC added as an experiment, Aug 2006
+	shared_ptr<Variable> StandardVariables::mainDisplayInfo;
+	shared_ptr<Variable> StandardVariables::currentState;
 	
-	shared_ptr<Variable> trialAnnounce;
-	shared_ptr<Variable> blockAnnounce;
+	shared_ptr<Variable> StandardVariables::trialAnnounce;
+	shared_ptr<Variable> StandardVariables::blockAnnounce;
 	
-	shared_ptr<Variable> assertionFailure;
+	shared_ptr<Variable> StandardVariables::assertionFailure;
 	
-	shared_ptr<Variable> serverName;
+	shared_ptr<Variable> StandardVariables::serverName;
 	
-	shared_ptr<Variable> debuggerActive;
-	shared_ptr<Variable> debuggerRunning;
-	shared_ptr<Variable> debuggerStep;
+	shared_ptr<Variable> StandardVariables::debuggerActive;
+	shared_ptr<Variable> StandardVariables::debuggerRunning;
+	shared_ptr<Variable> StandardVariables::debuggerStep;
 	
-	shared_ptr<Variable> experimentLoadProgress;
+	shared_ptr<Variable> StandardVariables::experimentLoadProgress;
     
-    shared_ptr<Variable> alt_failover;
+    shared_ptr<Variable> StandardVariables::alt_failover;
+    shared_ptr<Variable> StandardVariables::auto_save;
+
 
 	
-	void initializeStandardVariables(shared_ptr<VariableRegistry> registry) {
+	void StandardVariables::initializeStandardVariables(shared_ptr<VariableRegistry> registry) {
 		
         
         alt_failover = registry->createGlobalVariable( new VariableProperties( new Datum((bool)true), 
@@ -57,7 +61,18 @@ namespace mw {
                                                                                    false, 
                                                                                    M_DISCRETE_BOOLEAN,
                                                                                    PRIVATE_SYSTEM_VARIABLES));
-                                                                                   
+        
+        auto_save = registry->createGlobalVariable( new VariableProperties( new Datum((bool)false),   // off by default 
+                                                                              AUTO_SAVE_TAGNAME, 
+                                                                              "auto_save", 
+                                                                              "Automatically stream data to a tmp file", 
+                                                                              M_WHEN_CHANGED,
+                                                                              M_WHEN_CHANGED, 
+                                                                              true, 
+                                                                              false, 
+                                                                              M_DISCRETE_BOOLEAN,
+                                                                              PRIVATE_SYSTEM_VARIABLES));
+                                                                                                                                                                                                                                         
 		state_system_mode = registry->createGlobalVariable( new VariableProperties(
 																			new Datum((long)IDLE), 
 																			STATE_SYSTEM_MODE_TAGNAME, 

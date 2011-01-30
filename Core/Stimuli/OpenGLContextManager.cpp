@@ -66,7 +66,7 @@ void *announce_beam_position(void *arg){
 		shared_ptr <StateSystem> state_system = StateSystem::instance();
 		
 		if(state_system->isRunning()){
-			beamPosition->setValue(Datum((double)beam_percent));
+			StandardVariables::beamPosition->setValue(Datum((double)beam_percent));
 		}
 	}
 	

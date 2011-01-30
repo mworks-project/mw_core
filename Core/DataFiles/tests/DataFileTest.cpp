@@ -1,5 +1,5 @@
 /*
- *  DatumFileTest.cpp
+ *  DataFileTest.cpp
  *  MWorksCore
  *
  *  Created by Ben Kennedy 2006
@@ -25,7 +25,7 @@ using namespace mw;
 #define MAX_EVENTS_TO_BUFFER	10000
 
 // Currently, all the tests do nothing, so why bother running them?
-//CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( DatumFileTestFixture, "Unit Test" );
+//CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( DataFileTestFixture, "Unit Test" );
 
 #define dft_CPPUNIT_ASSERT_TS(x)	dft_cppunit_lock->lock(); \
 CPPUNIT_ASSERT(x); \
@@ -51,7 +51,7 @@ void *dftTimeoutThread(void *args);
 
 
 
-void DatumFileTestFixture::setUp() {
+void DataFileTestFixture::setUp() {
 	static int testNumber = 0;
 	dft_ptrTestArgs = new struct dftTestArgs;
 	dft_ptrTestArgs->testNumber = testNumber;
@@ -83,7 +83,7 @@ void *dftTimeoutThread(void *args) {
 	return 0;
 }
 
-void DatumFileTestFixture::tearDown() {
+void DataFileTestFixture::tearDown() {
 	dft_ptrTestArgs->runningFlag = false;
 	delete dft_cppunit_lock;
 	delete dftglobal_outgoing_event_buffer;
@@ -91,10 +91,10 @@ void DatumFileTestFixture::tearDown() {
 }
 
 
-void DatumFileTestFixture::initializationTest() {
+void DataFileTestFixture::initializationTest() {
 }
 
-void DatumFileTestFixture::dataFileWriterTest() {
+void DataFileTestFixture::dataFileWriterTest() {
 //	// fill up an event queue
 //	for (int i =0; i<dft_BUFF_SIZE-1; ++i) {
 //	 Datum _i(M_INTEGER, i );
@@ -113,5 +113,5 @@ void DatumFileTestFixture::dataFileWriterTest() {
 //	delete buffer_reader;
 }
 
-void DatumFileTestFixture::multiDataFileWriterTest() {
+void DataFileTestFixture::multiDataFileWriterTest() {
 }

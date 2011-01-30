@@ -8,7 +8,7 @@ void IODevice::finalize(std::map<std::string, std::string> parameters, Component
 {
 	shared_ptr<IODevice> this_one = shared_from_this();
 	shared_ptr<IODeviceVariableNotification> notification(new IODeviceVariableNotification(this_one));
-	state_system_mode->addNotification(notification);			
+	StandardVariables::state_system_mode->addNotification(notification);			
 	
 	if(!initialize()) {
 		// Initialization failed, so try to map the tag to the alt device

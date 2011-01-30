@@ -31,7 +31,7 @@ DynamicStimulusDriver::DynamicStimulusDriver(shared_ptr<Scheduler> scheduler,
     state_system_callback = shared_ptr<VariableCallbackNotification>(
                                 new VariableCallbackNotification(boost::bind(&DynamicStimulusDriver::stateSystemCallback, this, _1,_2))
                             );
-    state_system_mode->addNotification(state_system_callback);
+    StandardVariables::state_system_mode->addNotification(state_system_callback);
 }
 
 DynamicStimulusDriver::DynamicStimulusDriver(const DynamicStimulusDriver &tocopy){}

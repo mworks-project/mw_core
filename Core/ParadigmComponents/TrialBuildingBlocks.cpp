@@ -50,7 +50,7 @@ void Action::action(){
 }
 
 void Action::announceEntry() {
-	currentState->setValue(getCompactID());
+	StandardVariables::currentState->setValue(getCompactID());
 }
 
 void Action::announceExit() {
@@ -299,10 +299,10 @@ bool AssertionAction::execute(){
 			outStr.append((*i)->getValue().toString());		
 		}
 		
-		assertionFailure->setValue(outStr);
+		StandardVariables::assertionFailure->setValue(outStr);
 		merror(M_STATE_SYSTEM_MESSAGE_DOMAIN,"Assertion: %s", 
 			   outStr.c_str());
-		assertionFailure->setValue((long)0);
+		StandardVariables::assertionFailure->setValue((long)0);
 	}
 	return true;
 }
@@ -1215,7 +1215,7 @@ weak_ptr<State> TransitionCondition::execute() {
 		
 		if(!transition.expired()){
 			shared_ptr<State> transition_shared(transition);
-			currentState->setValue(getCompactID());
+			StandardVariables::currentState->setValue(getCompactID());
             return transition;
 		} else {
 			// TODO: better throw
@@ -1228,7 +1228,7 @@ weak_ptr<State> TransitionCondition::execute() {
 		if(!transition.expired()){
 			shared_ptr<State> transition_shared(transition);
 			//currentState->setValue(name + " to " + transition_shared->getName());
-			currentState->setValue(getCompactID());
+			StandardVariables::currentState->setValue(getCompactID());
 			return transition;
 		} else {
 			// TODO: better throw
@@ -1320,7 +1320,7 @@ weak_ptr<State> TransitionIfTimerExpired::execute() {
 		if(!transition.expired()){
 			shared_ptr<State> transition_shared(transition);
 			//currentState->setValue(name + " to " + transition_shared->getName());
-			currentState->setValue(getCompactID());
+			StandardVariables::currentState->setValue(getCompactID());
             return transition;
 		} else {
 			// TODO: better throw
@@ -1377,7 +1377,7 @@ YieldToParent::~YieldToParent() {
 
 weak_ptr<State> YieldToParent::execute() {
 	
-	currentState->setValue(getCompactID());
+	StandardVariables::currentState->setValue(getCompactID());
 	//currentState->setValue(name);
 	//	fprintf(stderr, "===> Yielding to parent\n");
 	//	fflush(stderr);
@@ -1458,7 +1458,7 @@ shared_ptr<mw::Component> TaskSystemState::createInstanceObject(){
 }
 
 void TaskSystemState::action() {
-	currentState->setValue(getCompactID());
+	StandardVariables::currentState->setValue(getCompactID());
 	//currentState->setValue(name);
 	if(!done) {
 		int nelem = action_list->getNElements();
@@ -1646,7 +1646,7 @@ void TaskSystem::updateHierarchy() {
 
 void TaskSystem::action() {
 	//execution_triggered = 1;
-	currentState->setValue(getCompactID());
+	StandardVariables::currentState->setValue(getCompactID());
 	//currentState->setValue(name);
 	updateHierarchy();  // TODO: need to rethink how all of this is working...
 }

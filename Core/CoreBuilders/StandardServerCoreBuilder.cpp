@@ -25,6 +25,7 @@
 #import "OpenALContextManager.h"
 #import "OpenGLContextManager.h"
 #include "PlatformDependentServices.h"
+#include "DataFileManager.h"
 using namespace mw;
 
 StandardServerCoreBuilder::StandardServerCoreBuilder() { }
@@ -49,7 +50,7 @@ bool StandardServerCoreBuilder::initializeRegistries() {
 }
 
 bool StandardServerCoreBuilder::initializeGlobalParameters() {
-    initializeStandardVariables(global_variable_registry);
+    StandardVariables::initializeStandardVariables(global_variable_registry);
 	try {
 		loadSetupVariables();
 	} catch (std::exception& e){

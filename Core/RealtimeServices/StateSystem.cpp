@@ -11,6 +11,10 @@ SINGLETON_INSTANCE_STATIC_DECLARATION(StateSystem)
 
 StateSystem::StateSystem(const shared_ptr <Clock> &a_clock) {
 	the_clock = a_clock;
+    
+    callback_lists[ START ] = shared_ptr<CallbackList>(new CallbackList());
+    callback_lists[ STOP ] = shared_ptr<CallbackList>(new CallbackList());
+    callback_lists[ PAUSE ] = shared_ptr<CallbackList>(new CallbackList());
 }
 
 StateSystem::~StateSystem() {}

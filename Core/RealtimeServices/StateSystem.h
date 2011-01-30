@@ -7,27 +7,38 @@
 #include "MWorksTypes.h"
 #include "States.h"
 #include "Clock.h"
-#include "boost/enable_shared_from_this.hpp"
-//#include "States.h"
+#include <vector>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/function.hpp>
 
 
 namespace mw {
 class StateSystem : public mw::Component, public enable_shared_from_this<StateSystem>{ //, public RegisteredSingleton<StateSystem> {
+
+
+public:
+
+    enum action {
+        START,
+        STOP,
+        PAUSE
+    };
+
 protected:
 	shared_ptr <Clock> the_clock;
 	
+    
+    typedef vector< boost::function<void()> > CallbackList;
+    typedef map< StateSystem::action, shared_ptr<CallbackList> >  CallbackTable;
+    CallbackTable callback_lists;
+        
+    
 public:
     
 	StateSystem(const shared_ptr <Clock> &a_clock);
 	
 	virtual ~StateSystem();
 	
-	
-	/*StateSystem(Experiment *exp);
-	 
-	 virtual void setExperiment(Experiment *exp);
-	 virtual Experiment *getExperiment();*/
-    
 	virtual void start();
 	virtual void stop();
 	virtual void pause();
@@ -48,7 +59,36 @@ public:
 	void setCurrentState(weak_ptr<State> current);
 	shared_ptr<Clock> getClock() const;
   
-  REGISTERED_SINGLETON_CODE_INJECTION(StateSystem)
+  
+    // hooks for state-system-related callbacks
+    virtual void registerCallback(StateSystem::action _action, boost::function<void()> callback){ 
+        shared_ptr<CallbackList> callback_list = callback_lists[_action];
+        if(callback_list != NULL){
+            callback_list->push_back(callback);
+        }
+    };
+    
+    virtual void serviceCallbacks(action _action){
+        shared_ptr<CallbackList> callback_list = callback_lists[_action];
+        if(callback_list != NULL){
+            
+            CallbackList::iterator i; 
+            for( i = callback_list->begin(); i != callback_list->end(); ++i){
+                (*i)(); // call it
+            }
+        }
+    }
+    
+    // unregister all callbacks
+    virtual void unregisterCallbacks(){
+        CallbackTable::iterator i;
+        for(i = callback_lists.begin(); i != callback_lists.end(); ++i){
+            ((*i).second)->clear();
+        }
+    }
+        
+  
+    REGISTERED_SINGLETON_CODE_INJECTION(StateSystem)
 };
 
 }

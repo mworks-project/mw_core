@@ -44,9 +44,10 @@ void FullCoreEnvironmentTestFixture::tearDown(){
 
   ComponentRegistry::detachSharedRegistryPtr();
 
-	if(GlobalDataFileManager) {
-	  delete GlobalDataFileManager;
-	  GlobalDataFileManager = 0;
+    shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance();
+	if(data_file_manager) {
+      data_file_manager = shared_ptr<DataFileManager>();
+      DataFileManager::registerInstance(data_file_manager);
 	}
 
 	

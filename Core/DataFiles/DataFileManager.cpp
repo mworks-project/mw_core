@@ -22,40 +22,43 @@
 using namespace mw;
 
 namespace mw {
- DataFileManager *GlobalDataFileManager;
+	SINGLETON_INSTANCE_STATIC_DECLARATION(DataFileManager)
 }
 
 DataFileManager::DataFileManager() {
 	
-	
     scarab_connection = shared_ptr<ScarabWriteConnection>();
     //session = NULL;
     file_open = false;
-	
+    tmp_file = false;
 }
 
 DataFileManager::~DataFileManager() { }
 
 int DataFileManager::openFile(const Datum &oeDatum) {
 	std::string dFile(oeDatum.getElement(DATA_FILE_FILENAME).getString());
- DatumFileOptions opt = (DatumFileOptions)oeDatum.getElement(DATA_FILE_OPTIONS).getInteger();
+    DataFileOptions opt = (DataFileOptions)oeDatum.getElement(DATA_FILE_OPTIONS).getInteger();
 	
 	if(dFile.size() == 0) {
 		merror(M_FILE_MESSAGE_DOMAIN, 
 			   "Attempt to open an empty data file");
 		return -1;
 	}
-	if(GlobalDataFileManager->isFileOpen()) {
+    
+	if(isFileOpen()) {
 		mwarning(M_FILE_MESSAGE_DOMAIN,
 				 "Data file already open at %s", 
-				 (GlobalDataFileManager->getFilename()).c_str());
+				 (getFilename()).c_str());
 		return -1;
 	}
 	
-	return openFile(dFile, opt);
+	return openFile(dFile, opt, false);
 }
 
-int DataFileManager::openFile(std::string _filename, DatumFileOptions opt) {
+int DataFileManager::openFile(std::string _filename, DataFileOptions opt, bool temporary) {
+
+    tmp_file = temporary;
+    
     // first we need to format the file name with the correct path and
     // extension
 	std::string _ext_(appendDataFileExtension(
@@ -119,6 +122,52 @@ int DataFileManager::openFile(std::string _filename, DatumFileOptions opt) {
     return 0;
 }
 
+int DataFileManager::openTmpFile(){
+    
+    if(isFileOpen()){
+        return -1;
+    }
+    
+    // create the tmp dir if it is not already there
+    boost::filesystem::path tmp_path(prependDataFilePath("/tmp"));
+    
+    try {
+        boost::filesystem::create_directory(tmp_path);
+    } catch (boost::filesystem::basic_filesystem_error<boost::filesystem::path>& e){
+        fprintf(stderr, e.what()); fflush(stderr);
+    }
+    
+    string tmp_template("/tmp/mw_temp_file_XXXXXX.mwk");
+    char *tmp = new char(tmp_template.size() + 1);
+    strncpy(tmp, tmp_template.c_str(), tmp_template.size());
+    //tmp_template.copy(tmp, tmp_template.size());
+    tmp[tmp_template.size()] = '\0';
+    int ret_code = mkstemps(tmp, 4);
+    
+    if(ret_code == EINVAL){
+        throw SimpleException("Unable to open temporary file: invalid temp file template");
+    }
+
+    if(ret_code == EEXIST){
+        throw SimpleException("Unable to open temporary file: cannot create file");
+    }
+    
+    
+    string tmp_filename(tmp);
+    delete [] tmp;
+    
+    return openFile(tmp_filename, M_NO_OVERWRITE, true);
+}
+ 
+    
+int DataFileManager::closeFileIfTmp(){
+    if(tmp_file){
+        return closeFile();
+    }
+    
+    return 0;
+}
+
 int DataFileManager::closeFile() {
     if(file_open) {
         scarab_connection->disconnect();
@@ -132,6 +181,8 @@ int DataFileManager::closeFile() {
 		merror(M_FILE_MESSAGE_DOMAIN,
 			   "Attempt to close a data file when there isn't one open");		
 	}
+    
+    tmp_file = false;
     return 0;
 }
 

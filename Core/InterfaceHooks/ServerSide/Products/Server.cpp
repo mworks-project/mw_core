@@ -27,13 +27,16 @@ Server::Server() : RegistryAwareEventStreamInterface(M_SERVER_MESSAGE_DOMAIN, tr
     server = shared_ptr<ScarabServer>(new ScarabServer(global_incoming_event_buffer, global_outgoing_event_buffer));
 
 	// dont know where else this would be handled?
-    if(GlobalDataFileManager == NULL) {
-        GlobalDataFileManager = new DataFileManager();
+    shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance(false);
+    if(data_file_manager == NULL) {
+        data_file_manager = shared_ptr<DataFileManager>(new DataFileManager());
+        DataFileManager::registerInstance(data_file_manager);
     }
 		
 	server->setServerListenLowPort(19989);
     server->setServerListenHighPort(19999);
 	server->setServerHostname("127.0.0.1");
+    
 }
 
 Server::~Server() {
@@ -128,9 +131,28 @@ bool Server::closeExperiment(){
 }
 
 void Server::startDataFileManager() {
-    if(GlobalDataFileManager == NULL) {
-        GlobalDataFileManager = new DataFileManager();
+    shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance(false);
+    
+    if(data_file_manager == NULL) {
+        data_file_manager = shared_ptr<DataFileManager>(new DataFileManager());
+        DataFileManager::registerInstance(data_file_manager);
     }
+    
+    
+    // If appropriate, register hooks to automatically save temporary files
+    if(*StandardVariables::auto_save){
+        fprintf(stderr, "Enabling auto save\n"); fflush(stderr);
+        shared_ptr<StateSystem> state_system = StateSystem::instance(false);
+    
+        if(state_system != NULL && data_file_manager != NULL){
+            state_system->unregisterCallbacks();
+            state_system->registerCallback(StateSystem::START, boost::bind(&DataFileManager::openTmpFile, data_file_manager));
+            state_system->registerCallback(StateSystem::STOP, boost::bind(&DataFileManager::closeFileIfTmp, data_file_manager));
+        }
+    } else {
+        fprintf(stderr, "Auto save not enabled\n"); fflush(stderr);
+    }
+    
 }
 
 bool Server::openDataFile(const char * path, int options) {
@@ -146,7 +168,12 @@ void Server::closeFile() {
 }
 
 bool Server::isDataFileOpen() {
-    return GlobalDataFileManager->isFileOpen();
+    shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance(false);
+    if(data_file_manager != NULL){
+        return data_file_manager->isFileOpen();
+    } else {
+        return false;
+    }
 }
 
 bool Server::isExperimentRunning() {

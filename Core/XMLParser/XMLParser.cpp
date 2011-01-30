@@ -152,7 +152,7 @@ void XMLParser::parse(bool announce_progress){
 	
 	int counter = 0;
 	while(child != NULL){
-		experimentLoadProgress->setValue((double)counter / (double)n_nodes);
+		StandardVariables::experimentLoadProgress->setValue((double)counter / (double)n_nodes);
 		//mprintf("progress: %g", (double)(*experimentLoadProgress));
 		_processNode(child);
 		counter++;
@@ -664,7 +664,7 @@ void XMLParser::_processGenericCreateDirective(xmlNode *node, bool anon){
 		// will fail to create if the device is not currently connected.
 		// Alt substitution is the responsibility of the object class in question,
 		// and is usually handled in a "finalize" directive
-        bool allow_failover = (bool)(alt_failover->getValue());
+        bool allow_failover = (bool)(StandardVariables::alt_failover->getValue());
 		if(properties.find("alt") != properties.end() && allow_failover){
 			mwarning(M_PARSER_MESSAGE_DOMAIN,
 					 "Failed to create object \"%s\" of type %s (but alt object is specified)",

@@ -205,7 +205,7 @@ shared_ptr<Event> SystemEventFactory::setEventForwardingControl(string name, boo
 }
 
 shared_ptr<Event> SystemEventFactory::dataFileOpenControl(std::string  filename, 
-													  DatumFileOptions opt) {
+													  DataFileOptions opt) {
     
     Datum dfDatum(M_DICTIONARY, DATA_FILE_OPEN_PAYLOAD_SIZE);
 	
@@ -452,8 +452,8 @@ int SystemEventFactory::responseEventCommandCode(ScarabDatum * payload) {
 
 // generic builder methods
 Datum SystemEventFactory::systemEventPackage(SystemEventType eType, 
-										SystemPayloadType pType,
-									 Datum payload) {
+                                             SystemPayloadType pType,
+                                             Datum payload) {
     
     Datum systemEventPackage(M_DICTIONARY,
 							 SCARAB_PAYLOAD_EVENT_N_TOPLEVEL_ELEMENTS);

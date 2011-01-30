@@ -132,16 +132,16 @@ Datum::Datum(const MWTime newdata){
   setInteger(newdata);
 }
 
-Datum::Datum(const char * string) {
+Datum::Datum(const char * astring) {
   initScarabDatum();
   datatype = M_STRING;
-  setString(string, strlen(string)+1);
+  setString(astring, strlen(astring)+1);
 }
 
-Datum::Datum(const std::string &string){
+Datum::Datum(const std::string &astring){
   initScarabDatum();
   datatype = M_STRING;
-  setString(string.c_str(), string.size()+1);
+  setString(astring.c_str(), astring.size()+1);
 }
 
 Datum::Datum(bool newdata) {
@@ -527,16 +527,16 @@ void Datum::setString(const char * newdata, int size) {
 
   //int size = strlen(newdata) + 1;
   
-  char *string = new char[size];
-  memcpy(string, newdata, size);
+  char *astring = new char[size];
+  memcpy(astring, newdata, size);
   
-  data = scarab_new_opaque(string, size);
+  data = scarab_new_opaque(astring, size);
 
   #if INTERNALLY_LOCKED_MDATA
 	unlock();
   #endif
     
-  delete[] string;
+  delete[] astring;
   
 }
 

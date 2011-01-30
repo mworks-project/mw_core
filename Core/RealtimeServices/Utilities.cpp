@@ -48,13 +48,13 @@ namespace mw {
 		messageDatum.addElement(M_MESSAGE, Datum(std::string(buffer)));
 		messageDatum.addElement(M_MESSAGE_TYPE, Datum(M_INTEGER, type));
 		messageDatum.addElement(M_MESSAGE_ORIGIN, Datum(M_INTEGER, GlobalMessageOrigin));
-		if(GlobalMessageVariable != 0) {
+		if(StandardVariables::GlobalMessageVariable != 0) {
 			if(type == M_GENERIC_MESSAGE){
             
-				GlobalMessageVariable->setValue(messageDatum);
+				StandardVariables::GlobalMessageVariable->setValue(messageDatum);
 			} else {
 #ifndef	SILENCE_WARNINGS_MODE
-				GlobalMessageVariable->setValue(messageDatum);
+				StandardVariables::GlobalMessageVariable->setValue(messageDatum);
 #endif
 			}
 		}

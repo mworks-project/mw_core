@@ -59,12 +59,10 @@ StandardStateSystem::StandardStateSystem(const shared_ptr <Clock> &a_clock) : St
 }
 
 void StandardStateSystem::start(){
-
-    //E->setInt(taskMode_edit, RUNNING);
-
-//	(*state_system_mode) = RUNNING;
   
 	mprintf("Called start on state system");
+    
+    serviceCallbacks(StateSystem::START);
 	
 	if(GlobalCurrentExperiment == NULL){
 		merror(M_STATE_SYSTEM_MESSAGE_DOMAIN,
@@ -95,15 +93,17 @@ void StandardStateSystem::start(){
 void StandardStateSystem::stop(){
     // stop this thing somehow....
 
-	if(state_system_mode != NULL){
+	if(StandardVariables::state_system_mode != NULL){
 		// is_running = false;
-		(*state_system_mode) = IDLE;
+		(*StandardVariables::state_system_mode) = IDLE;
 	}
 	
 	
 	// TODO: need to stop ongoing schedules...
 	// esp. IO devices
     sendSystemStateEvent();
+    
+    serviceCallbacks(StateSystem::STOP);
 }
 
 void StandardStateSystem::pause(){
@@ -187,7 +187,7 @@ void *checkStateSystem(void *void_state_system){
 		return NULL;
 	}
     //mprintf("----------setting task  mode to running------------");
-	(*state_system_mode) = (long) RUNNING;
+	*StandardVariables::state_system_mode = (long) RUNNING;
 	current_state = GlobalCurrentExperiment->getCurrentState();
     
 	//mExperiment *testexp = GlobalCurrentExperiment;
@@ -196,7 +196,7 @@ void *checkStateSystem(void *void_state_system){
 		merror(M_STATE_SYSTEM_MESSAGE_DOMAIN,
 				"current state is NULL. Shutting down state system...");
 				
-		(*state_system_mode) = (long)IDLE;
+		*StandardVariables::state_system_mode = (long)IDLE;
 	}
         
         //while(1){
@@ -209,8 +209,8 @@ void *checkStateSystem(void *void_state_system){
 	shared_ptr<State> current_state_shared(current_state);
 	
 	while((current_state_shared != NULL			  &&		// broken system
-	      (long)(*state_system_mode) != IDLE      &&			// hard stop
-		  (long)(*state_system_mode) != STOPPING)  ||		// stop requested
+	      (long)(*StandardVariables::state_system_mode) != IDLE      &&			// hard stop
+		  (long)(*StandardVariables::state_system_mode) != STOPPING)  ||		// stop requested
 								!(current_state_shared->isInterruptible())){ // might not be
 																			   // an okay place to stop
 		
@@ -233,7 +233,7 @@ void *checkStateSystem(void *void_state_system){
 			} catch(std::exception& e){
 				merror(M_PARADIGM_MESSAGE_DOMAIN,
 					   "Stopping state system: %s", e.what());
-				state_system_mode->setValue((long)STOPPING);
+				StandardVariables::state_system_mode->setValue((long)STOPPING);
 				break;
 			}
 		
@@ -250,15 +250,15 @@ void *checkStateSystem(void *void_state_system){
 			} catch (std::exception& e){
 				merror(M_PARADIGM_MESSAGE_DOMAIN,
 					  "Stopping state system: %s", e.what());
-				state_system_mode->setValue((long)STOPPING);
+				StandardVariables::state_system_mode->setValue((long)STOPPING);
 				break;
 			}
 			
 			while(next_state.expired()){// && E->getInt(taskMode_edit) == RUNNING){
 				
 				if(current_state_shared->isInterruptible() &&
-					((long)(*state_system_mode) == IDLE  ||			// hard stop
-					 (long)(*state_system_mode) == STOPPING)){
+					((long)(*StandardVariables::state_system_mode) == IDLE  ||			// hard stop
+					 (long)(*StandardVariables::state_system_mode) == STOPPING)){
 					 next_state = GlobalCurrentExperiment;
 					 break;
 				}
@@ -270,7 +270,7 @@ void *checkStateSystem(void *void_state_system){
 				} catch (std::exception& e){
 					merror(M_PARADIGM_MESSAGE_DOMAIN,
 						  "Stopping state system: %s", e.what());
-                    state_system_mode->setValue((long)STOPPING);
+                    StandardVariables::state_system_mode->setValue((long)STOPPING);
                     break;
 				}
 				
@@ -283,7 +283,7 @@ void *checkStateSystem(void *void_state_system){
                 next_state_shared = attempt; // machination required because of weak to shared conversion semantics
 			} catch (std::exception& e){
                 mwarning(M_STATE_SYSTEM_MESSAGE_DOMAIN, "Failed to acquire shared_ptr from next_state; coming to an abrupt halt");
-                (*state_system_mode) = IDLE;
+                (*StandardVariables::state_system_mode) = IDLE;
                 continue;
             }
 			
@@ -297,7 +297,7 @@ void *checkStateSystem(void *void_state_system){
 			if(current_state_shared.get() == GlobalCurrentExperiment.get() && 
 					next_state_shared.get() == GlobalCurrentExperiment.get()){
 					mprintf("Returned to Experiment node, halting state system...");
-					(*state_system_mode) = IDLE;
+					(*StandardVariables::state_system_mode) = IDLE;
 					current_state = weak_ptr<State>();
 					next_state = weak_ptr<State>();
 					continue;
@@ -319,7 +319,7 @@ void *checkStateSystem(void *void_state_system){
 	in_action = false;
 	in_transition = false;
 	is_running = false;
-    (*state_system_mode) = IDLE;    
+    (*StandardVariables::state_system_mode) = IDLE;    
 	mprintf("State system ending");
 	
 	

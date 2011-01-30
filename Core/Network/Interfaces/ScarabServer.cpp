@@ -478,8 +478,9 @@ int ScarabServer::service() {
     outgoing_event_buffer->putEvent(SystemEventFactory::codecPackage());
     
     // TODO: move this out into some sort of "announceSystemState" call?
-    if(GlobalDataFileManager != NULL && GlobalDataFileManager->isFileOpen()){
-        std::string fname = GlobalDataFileManager->getFilename();
+    shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance(false);
+    if(data_file_manager != NULL && data_file_manager->isFileOpen()){
+        std::string fname = data_file_manager->getFilename();
         outgoing_event_buffer->putEvent(SystemEventFactory::dataFileOpenedResponse(fname,
 																	   M_COMMAND_SUCCESS));
     }

@@ -134,7 +134,7 @@ void State::requestVariableContext(){
 State::~State() { }
 
 void State::action() {
-    currentState->setValue(getCompactID());
+    StandardVariables::currentState->setValue(getCompactID());
 	//currentState->setValue(tag);
 	
 	if(!experiment.expired()){

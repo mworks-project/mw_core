@@ -134,16 +134,7 @@ namespace mw {
 			return false;
 		}
 		
-// This is getting double loaded    
-/*		try {
-			loadSetupVariables();
-		} catch(std::exception& e){
-			merror(M_PARSER_MESSAGE_DOMAIN, "Failed to load setup variables.  Specific problems was: \"%s\"", e.what());
-			GlobalCurrentExperiment = shared_ptr<Experiment>();
-			global_outgoing_event_buffer->putEvent(SystemEventFactory::currentExperimentState());
-			return false;
-		}*/
-		
+        
 		shared_ptr<ComponentRegistry> reg = ComponentRegistry::getSharedRegistry();
 		
 		try {
@@ -171,6 +162,30 @@ namespace mw {
 		global_outgoing_event_buffer->putEvent(SystemEventFactory::protocolPackage());
 		global_variable_registry->announceAll();
 		
+        
+        
+        shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance(false);
+        
+        if(data_file_manager == NULL) {
+            data_file_manager = shared_ptr<DataFileManager>(new DataFileManager());
+            DataFileManager::registerInstance(data_file_manager);
+        }
+        
+        
+        // If appropriate, register hooks to automatically save temporary files
+        if(StandardVariables::auto_save->getValue()){
+            fprintf(stderr, "Enabling auto save\n"); fflush(stderr);
+            shared_ptr<StateSystem> state_system = StateSystem::instance(false);
+            
+            if(state_system != NULL && data_file_manager != NULL){
+                state_system->unregisterCallbacks();
+                state_system->registerCallback(StateSystem::START, boost::bind(&DataFileManager::openTmpFile, data_file_manager));
+                state_system->registerCallback(StateSystem::STOP, boost::bind(&DataFileManager::closeFileIfTmp, data_file_manager));
+            }
+        } else {
+            fprintf(stderr, "Auto save not enabled: %d\n", (int)(StandardVariables::auto_save->getValue())); fflush(stderr);
+        }
+        
 		return true;
 	}
 	
@@ -189,10 +204,11 @@ namespace mw {
 		if(global_variable_registry != NULL) {	// exp. already loaded
 			global_variable_registry->reset();
             //global_variable_registry = shared_ptr<VariableRegistry>(new VariableRegistry(global_outgoing_event_buffer));
-			initializeStandardVariables(global_variable_registry);
+			StandardVariables::initializeStandardVariables(global_variable_registry);
 			loadSetupVariables();
 		}
 		
+        
         
         shared_ptr<OpenGLContextManager> opengl_context_manager = OpenGLContextManager::instance(false);
         if(opengl_context_manager != NULL){
@@ -215,17 +231,18 @@ namespace mw {
 		
 		GlobalOpenALContextManager = new OpenALContextManager();
 		
-		if(GlobalDataFileManager != NULL && GlobalDataFileManager->isFileOpen()){
-			GlobalDataFileManager->closeFile();
+        
+        shared_ptr<DataFileManager> data_file_manager = DataFileManager::instance(false);
+		if(data_file_manager != NULL && data_file_manager->isFileOpen()){
+			data_file_manager->closeFile();
 		}
+        
+        
 		
 		if(announce){
-			
 			global_outgoing_event_buffer->putEvent(SystemEventFactory::componentCodecPackage());
 			global_outgoing_event_buffer->putEvent(SystemEventFactory::codecPackage());
-			
 			global_outgoing_event_buffer->putEvent(SystemEventFactory::currentExperimentState());
-			//global_outgoing_event_buffer->putEvent(SystemEventFactory::protocolPackage());
 			global_variable_registry->announceAll();
 		}
 	}

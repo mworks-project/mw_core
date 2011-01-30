@@ -25,14 +25,14 @@ Block::Block() : ListState(){
 void Block::action(){
 	ListState::action();
 	if(!accessed) {
-		blockAnnounce->setValue(blockAnnounce->getValue().getInteger() + 1);
+		StandardVariables::blockAnnounce->setValue(StandardVariables::blockAnnounce->getValue().getInteger() + 1);
 		accessed = true;
 	}
 }
 
 weak_ptr<State> Block::next(){
 	if(!has_more_children_to_run) {
-		blockAnnounce->setValue(blockAnnounce->getValue().getInteger() - 1);
+		StandardVariables::blockAnnounce->setValue(StandardVariables::blockAnnounce->getValue().getInteger() - 1);
 	}
 	return ListState::next();
 }
@@ -149,14 +149,14 @@ Trial::Trial() :ListState(){
 void Trial::action(){
 	ListState::action();
 	if(!accessed) {
-		trialAnnounce->setValue(trialAnnounce->getValue().getInteger() + 1);
+		StandardVariables::trialAnnounce->setValue(StandardVariables::trialAnnounce->getValue().getInteger() + 1);
 		accessed = true;
 	}
 }
 
 weak_ptr<State> Trial::next(){
 	if(!has_more_children_to_run) {
-		trialAnnounce->setValue(trialAnnounce->getValue().getInteger() - 1);
+		StandardVariables::trialAnnounce->setValue(StandardVariables::trialAnnounce->getValue().getInteger() - 1);
 	}
 	return ListState::next();
 }
